@@ -31,7 +31,18 @@ public class HomeLayout extends javax.swing.JPanel {
         CardLayout innerCard = (CardLayout) cardPanel.getLayout();
         innerCard.show(cardPanel, "main");
     }
-
+    
+    public void onShow() {
+        traitPanel.initData();
+    }
+    
+    @Override
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        if (visible) {
+            onShow(); // Load data when the panel becomes visible
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

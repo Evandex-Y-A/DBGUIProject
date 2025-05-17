@@ -4,19 +4,90 @@
  */
 package UI;
 
+import DAO.UserDAO;
+import Utils.DatabaseUtils;
+import Utils.TableModel;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+
 /**
  *
  * @author evandex
  */
 public class TraitUI extends javax.swing.JPanel {
 
+    private DefaultTableModel model;
+    private TableRowSorter<DefaultTableModel> sorter;
     /**
      * Creates new form TraitUI
      */
     public TraitUI() {
         initComponents();
+        initSearchListener();
     }
+    
 
+    
+    public void initData() {
+        loadData();
+    }
+    
+    public void refreshTable() {
+        loadData();
+        filterTable();
+    }
+    
+    private void loadData() {
+        String[] columns = {"Trait ID", "Trait Name"};
+        Object[][] data = fetchData();
+        model = new TableModel(data, columns);
+        Table.setModel(model);
+        sorter = new TableRowSorter<>(model);
+        Table.setRowSorter(sorter);
+    }
+    
+    private Object[][] fetchData() {
+        if (UserDAO.currentUser == null)
+            return new Object[0][]; // Return empty data
+        
+        List<Object> rows = new ArrayList<>();
+        try {
+            Connection connection = DatabaseUtils.ConnecttoDB();
+            PreparedStatement fetch = connection.prepareStatement("SELECT * FROM traits where user_id = ?");
+            fetch.setInt(1, UserDAO.currentUser.getID());
+            ResultSet data = fetch.executeQuery();
+            while (data.next()) {
+                Object[] row = {
+                    data.getInt("trait_id"),
+                    data.getString("name")
+                };
+                rows.add(row);
+            }
+            return rows.toArray(new Object[0][]);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage());
+            return new Object[0][];
+        }
+    }
+    
+    private void filterTable() {
+        String query = searchTraitField.getText().trim().toLowerCase();
+        if (query.equals("search...") || query.isEmpty())
+            sorter.setRowFilter(null);
+        else {
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + query, 1));
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -29,8 +100,11 @@ public class TraitUI extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
-        jTextField2 = new javax.swing.JTextField();
+        addTraitButton = new javax.swing.JButton();
+        renameTraitButton = new javax.swing.JButton();
+        searchTraitField = new javax.swing.JTextField();
+        traitsTable = new javax.swing.JScrollPane();
+        Table = new javax.swing.JTable();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -43,24 +117,105 @@ public class TraitUI extends javax.swing.JPanel {
         jPanel2.setBackground(new java.awt.Color(100, 100, 100));
         jPanel2.setMinimumSize(new java.awt.Dimension(10, 20));
 
-        jButton1.setText("Add Trait");
-        jPanel2.add(jButton1);
+        addTraitButton.setText("Add Trait");
+        addTraitButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addTraitButtonActionPerformed(evt);
+            }
+        });
+        jPanel2.add(addTraitButton);
 
-        jTextField2.setText("Search...");
-        jTextField2.setPreferredSize(new java.awt.Dimension(200, 22));
-        jPanel2.add(jTextField2);
+        renameTraitButton.setText("Rename Trait");
+        renameTraitButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                renameTraitButtonActionPerformed(evt);
+            }
+        });
+        jPanel2.add(renameTraitButton);
+
+        searchTraitField.setText("Search...");
+        searchTraitField.setPreferredSize(new java.awt.Dimension(200, 22));
+        searchTraitField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                searchTraitFieldFocusGained(evt);
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                searchTraitFieldFocusLost(evt);
+            }
+        });
+        jPanel2.add(searchTraitField);
 
         jPanel1.add(jPanel2, java.awt.BorderLayout.PAGE_START);
+
+        Table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "Trait ID", "Trait Name"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        traitsTable.setViewportView(Table);
+
+        jPanel1.add(traitsTable, java.awt.BorderLayout.CENTER);
 
         add(jPanel1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void initSearchListener() {
+        searchTraitField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { filterTable(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { filterTable(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { filterTable(); }
+        });
+    }
+    private void addTraitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTraitButtonActionPerformed
+        TraitDialog dialog = new TraitDialog((Frame) SwingUtilities.getWindowAncestor(addTraitButton), true);
+        dialog.setVisible(true);
+        refreshTable();
+    }//GEN-LAST:event_addTraitButtonActionPerformed
+
+    private void renameTraitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renameTraitButtonActionPerformed
+        TraitEditDialog dialog = new TraitEditDialog((Frame) SwingUtilities.getWindowAncestor(addTraitButton), true);
+        dialog.setVisible(true);
+        refreshTable();
+    }//GEN-LAST:event_renameTraitButtonActionPerformed
+
+    private void searchTraitFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_searchTraitFieldFocusGained
+        if (searchTraitField.getText().equals("Search...")) {
+            searchTraitField.setText("");
+        }
+    }//GEN-LAST:event_searchTraitFieldFocusGained
+
+    private void searchTraitFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_searchTraitFieldFocusLost
+        if (searchTraitField.getText().isEmpty()) {
+            searchTraitField.setText("Search...");
+        }
+    }//GEN-LAST:event_searchTraitFieldFocusLost
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
+    private javax.swing.JTable Table;
+    private javax.swing.JButton addTraitButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JTextField jTextField2;
+    private javax.swing.JButton renameTraitButton;
+    private javax.swing.JTextField searchTraitField;
+    private javax.swing.JScrollPane traitsTable;
     // End of variables declaration//GEN-END:variables
 }

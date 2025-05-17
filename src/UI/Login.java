@@ -5,11 +5,12 @@ import java.awt.CardLayout;
 import java.awt.Cursor;
 import DAO.UserDAO;
 public class Login extends JPanel {
-
+    private Frame parent;
     /**
      * Creates new form Login
      */
-    public Login() {
+    public Login(Frame frame) {
+        this.parent = frame;
         initComponents();
     }
     
@@ -199,8 +200,7 @@ public class Login extends JPanel {
         UserDAO user = new UserDAO();
         try {
             if (user.userLogin(username, password)) {
-                CardLayout outerCard = (CardLayout) getParent().getLayout();
-                outerCard.show(getParent(), "homelayout");
+                parent.showMainUI();
             }
         } finally {
             user.closeConnection();

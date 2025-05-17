@@ -12,7 +12,7 @@ import Utils.Passwords;
 
 public class UserDAO {
     private Connection connection;
-    private static User currentUser;
+    public static User currentUser;
     
     public UserDAO() {
         connection = DatabaseUtils.ConnecttoDB();
@@ -27,7 +27,7 @@ public class UserDAO {
         String hashedPassword = Passwords.hasher(password);
         
         try {
-            PreparedStatement login = connection.prepareStatement("SELECT username, password FROM users WHERE username=?");
+            PreparedStatement login = connection.prepareStatement("SELECT user_id, username, password FROM users WHERE username=?");
             login.setString(1, username);
             ResultSet result = login.executeQuery();
             if (result.next()) {

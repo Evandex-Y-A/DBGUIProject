@@ -9,23 +9,26 @@ public class Frame extends JFrame {
     private Login loginCard;
     private Register registerCard;
     private HomeLayout homeLayoutCard;
-    private TestShit testCard;
+    private CardLayout outerCard;
     public Frame() {
         initComponents();
         setLocationRelativeTo(null);
-        loginCard = new Login();
+        loginCard = new Login(this);
         registerCard = new Register();
-        homeLayoutCard = new HomeLayout(loginCard);
-        testCard = new TestShit();
         
         mainPanel.add(loginCard, "login");
         mainPanel.add(registerCard, "register");
-        mainPanel.add(homeLayoutCard, "homelayout");
-        mainPanel.add(testCard, "test");
-        CardLayout outerCard = (CardLayout) mainPanel.getLayout();
+        mainPanel.add(new JPanel(), "homelayout");
+        outerCard = (CardLayout) mainPanel.getLayout();
         outerCard.show(mainPanel, "login");
     }
-
+    
+    public void showMainUI() {
+        homeLayoutCard = new HomeLayout(loginCard);
+        mainPanel.add(homeLayoutCard, "homelayout");
+        outerCard.show(mainPanel, "homelayout");
+        homeLayoutCard.onShow();
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
