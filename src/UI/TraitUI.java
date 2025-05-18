@@ -190,6 +190,7 @@ public class TraitUI extends javax.swing.JPanel {
     }//GEN-LAST:event_addTraitButtonActionPerformed
 
     private void renameTraitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renameTraitButtonActionPerformed
+
         TraitEditDialog dialog = new TraitEditDialog((Frame) SwingUtilities.getWindowAncestor(addTraitButton), true);
         dialog.setVisible(true);
         refreshTable();

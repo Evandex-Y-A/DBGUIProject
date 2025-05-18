@@ -13,6 +13,7 @@ import javax.swing.*;
  */
 public class TraitEditDialog extends javax.swing.JDialog {
 
+    private static String oldTrait;
     /**
      * Creates new form TraitEditDialog
      */
@@ -42,7 +43,6 @@ public class TraitEditDialog extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
-        oldTraitField = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Rename Trait");
@@ -82,13 +82,11 @@ public class TraitEditDialog extends javax.swing.JDialog {
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
 
         jPanel4.setPreferredSize(new java.awt.Dimension(200, 30));
+        jPanel4.setLayout(new java.awt.BorderLayout());
 
         jLabel3.setText("Trait name:");
         jLabel3.setPreferredSize(new java.awt.Dimension(60, 30));
-        jPanel4.add(jLabel3);
-
-        oldTraitField.setPreferredSize(new java.awt.Dimension(100, 22));
-        jPanel4.add(oldTraitField);
+        jPanel4.add(jLabel3, java.awt.BorderLayout.LINE_START);
 
         getContentPane().add(jPanel4, java.awt.BorderLayout.PAGE_START);
 
@@ -100,7 +98,7 @@ public class TraitEditDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void renameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renameButtonActionPerformed
-        String oldTrait = oldTraitField.getText();
+
         String newTrait = newTraitField.getText();
         TraitDAO traitRename = new TraitDAO();
         try {
@@ -166,7 +164,6 @@ public class TraitEditDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JTextField newTraitField;
-    private javax.swing.JTextField oldTraitField;
     private javax.swing.JButton renameButton;
     // End of variables declaration//GEN-END:variables
 }

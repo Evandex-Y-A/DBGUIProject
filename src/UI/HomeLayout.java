@@ -55,7 +55,6 @@ public class HomeLayout extends javax.swing.JPanel {
         sidePanel = new javax.swing.JPanel();
         mainButton = new javax.swing.JButton();
         traitsButton = new javax.swing.JButton();
-        settingsButton = new javax.swing.JButton();
         logoutButton = new javax.swing.JButton();
         cardPanel = new javax.swing.JPanel();
 
@@ -89,17 +88,6 @@ public class HomeLayout extends javax.swing.JPanel {
             }
         });
         sidePanel.add(traitsButton);
-
-        settingsButton.setText("Settings");
-        settingsButton.setMaximumSize(new java.awt.Dimension(100, 23));
-        settingsButton.setMinimumSize(new java.awt.Dimension(100, 23));
-        settingsButton.setPreferredSize(new java.awt.Dimension(100, 23));
-        settingsButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                settingsButtonActionPerformed(evt);
-            }
-        });
-        sidePanel.add(settingsButton);
 
         logoutButton.setText("Log Out");
         logoutButton.setMaximumSize(new java.awt.Dimension(100, 23));
@@ -136,17 +124,11 @@ public class HomeLayout extends javax.swing.JPanel {
         innerCard.show(cardPanel, "traits");
     }//GEN-LAST:event_traitsButtonActionPerformed
 
-    private void settingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_settingsButtonActionPerformed
-        CardLayout innerCard = (CardLayout) cardPanel.getLayout();
-        innerCard.show(cardPanel, "settings");
-    }//GEN-LAST:event_settingsButtonActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel cardPanel;
     private javax.swing.JButton logoutButton;
     private javax.swing.JButton mainButton;
-    private javax.swing.JButton settingsButton;
     private javax.swing.JPanel sidePanel;
     private javax.swing.JButton traitsButton;
     // End of variables declaration//GEN-END:variables
