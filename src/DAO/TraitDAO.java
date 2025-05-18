@@ -63,6 +63,21 @@ public class TraitDAO {
         }
     }
     
+    public boolean deleteTrait(String trait) {
+        if (connection == null) {
+            JOptionPane.showMessageDialog(null, "Database connection error");
+            return false;
+        }
+        try {
+            PreparedStatement getTrait = connection.prepareStatement("DELETE FROM traits WHERE name = ?");
+            getTrait.setString(1, trait);
+            int rows = getTrait.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage());
+            return false;
+        }
+    }
     public boolean checkTrait(String trait) {
         try {
             PreparedStatement checkname = connection.prepareStatement("SELECT * FROM traits WHERE name = ?");

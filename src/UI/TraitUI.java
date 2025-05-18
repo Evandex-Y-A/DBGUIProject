@@ -102,6 +102,7 @@ public class TraitUI extends javax.swing.JPanel {
         jPanel2 = new javax.swing.JPanel();
         addTraitButton = new javax.swing.JButton();
         renameTraitButton = new javax.swing.JButton();
+        deleteTraitButton = new javax.swing.JButton();
         searchTraitField = new javax.swing.JTextField();
         traitsTable = new javax.swing.JScrollPane();
         Table = new javax.swing.JTable();
@@ -117,7 +118,8 @@ public class TraitUI extends javax.swing.JPanel {
         jPanel2.setBackground(new java.awt.Color(100, 100, 100));
         jPanel2.setMinimumSize(new java.awt.Dimension(10, 20));
 
-        addTraitButton.setText("Add Trait");
+        addTraitButton.setText("Add");
+        addTraitButton.setPreferredSize(new java.awt.Dimension(60, 23));
         addTraitButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addTraitButtonActionPerformed(evt);
@@ -125,7 +127,7 @@ public class TraitUI extends javax.swing.JPanel {
         });
         jPanel2.add(addTraitButton);
 
-        renameTraitButton.setText("Rename Trait");
+        renameTraitButton.setText("Rename");
         renameTraitButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 renameTraitButtonActionPerformed(evt);
@@ -133,8 +135,16 @@ public class TraitUI extends javax.swing.JPanel {
         });
         jPanel2.add(renameTraitButton);
 
+        deleteTraitButton.setText("Delete");
+        deleteTraitButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteTraitButtonActionPerformed(evt);
+            }
+        });
+        jPanel2.add(deleteTraitButton);
+
         searchTraitField.setText("Search...");
-        searchTraitField.setPreferredSize(new java.awt.Dimension(200, 22));
+        searchTraitField.setPreferredSize(new java.awt.Dimension(150, 22));
         searchTraitField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 searchTraitFieldFocusGained(evt);
@@ -190,8 +200,7 @@ public class TraitUI extends javax.swing.JPanel {
     }//GEN-LAST:event_addTraitButtonActionPerformed
 
     private void renameTraitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renameTraitButtonActionPerformed
-
-        TraitEditDialog dialog = new TraitEditDialog((Frame) SwingUtilities.getWindowAncestor(addTraitButton), true);
+        TraitEditDialog dialog = new TraitEditDialog((Frame) SwingUtilities.getWindowAncestor(renameTraitButton), true);
         dialog.setVisible(true);
         refreshTable();
     }//GEN-LAST:event_renameTraitButtonActionPerformed
@@ -208,10 +217,17 @@ public class TraitUI extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_searchTraitFieldFocusLost
 
+    private void deleteTraitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTraitButtonActionPerformed
+        TraitDeleteDialog dialog = new TraitDeleteDialog((Frame) SwingUtilities.getWindowAncestor(deleteTraitButton), true);
+        dialog.setVisible(true);
+        refreshTable();
+    }//GEN-LAST:event_deleteTraitButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable Table;
     private javax.swing.JButton addTraitButton;
+    private javax.swing.JButton deleteTraitButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;

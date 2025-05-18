@@ -45,7 +45,7 @@ public class TraitDialog extends javax.swing.JDialog {
         setTitle("Add Character Trait");
         getContentPane().setLayout(new java.awt.BorderLayout(5, 5));
 
-        jLabel1.setText("   Trait:");
+        jLabel1.setText("Trait Name:");
         jLabel1.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
         getContentPane().add(jLabel1, java.awt.BorderLayout.PAGE_START);
 

@@ -71,6 +71,24 @@ public class UserDAO {
         }
     }
     
+    public boolean deleteUser(int userID) {
+        if (connection == null) {
+            JOptionPane.showMessageDialog(null, "Database connection error");
+            return false;
+        }
+        try {
+            PreparedStatement deleteUser = connection.prepareStatement("DELETE FROM users WHERE user_id = ?");
+            deleteUser.setInt(1, userID);
+            int rows = deleteUser.executeUpdate();
+            if (rows > 0 && currentUser != null && currentUser.getID() == userID) {
+            currentUser = null;
+            }
+            return rows > 0;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage());
+            return false;
+        }
+    }
     public void closeConnection() {
         try {
             if (connection != null) {

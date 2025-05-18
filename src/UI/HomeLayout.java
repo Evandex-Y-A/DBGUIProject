@@ -6,6 +6,8 @@ package UI;
 
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import javax.swing.JOptionPane;
+import DAO.UserDAO;
 /**
  *
  * @author evandex
@@ -56,21 +58,22 @@ public class HomeLayout extends javax.swing.JPanel {
         mainButton = new javax.swing.JButton();
         traitsButton = new javax.swing.JButton();
         logoutButton = new javax.swing.JButton();
+        deleteAccountButton = new javax.swing.JButton();
         cardPanel = new javax.swing.JPanel();
 
         setLayout(new java.awt.BorderLayout());
 
         sidePanel.setBackground(new java.awt.Color(51, 51, 51));
-        sidePanel.setMaximumSize(new java.awt.Dimension(100, 92));
-        sidePanel.setMinimumSize(new java.awt.Dimension(100, 92));
+        sidePanel.setMaximumSize(new java.awt.Dimension(111, 92));
+        sidePanel.setMinimumSize(new java.awt.Dimension(111, 92));
         sidePanel.setName(""); // NOI18N
-        sidePanel.setPreferredSize(new java.awt.Dimension(100, 300));
+        sidePanel.setPreferredSize(new java.awt.Dimension(111, 300));
         sidePanel.setLayout(new javax.swing.BoxLayout(sidePanel, javax.swing.BoxLayout.Y_AXIS));
 
         mainButton.setText("Main");
-        mainButton.setMaximumSize(new java.awt.Dimension(100, 23));
-        mainButton.setMinimumSize(new java.awt.Dimension(100, 23));
-        mainButton.setPreferredSize(new java.awt.Dimension(100, 23));
+        mainButton.setMaximumSize(new java.awt.Dimension(111, 23));
+        mainButton.setMinimumSize(new java.awt.Dimension(111, 23));
+        mainButton.setPreferredSize(new java.awt.Dimension(111, 23));
         mainButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mainButtonActionPerformed(evt);
@@ -79,9 +82,9 @@ public class HomeLayout extends javax.swing.JPanel {
         sidePanel.add(mainButton);
 
         traitsButton.setText("Traits");
-        traitsButton.setMaximumSize(new java.awt.Dimension(100, 23));
-        traitsButton.setMinimumSize(new java.awt.Dimension(100, 23));
-        traitsButton.setPreferredSize(new java.awt.Dimension(100, 23));
+        traitsButton.setMaximumSize(new java.awt.Dimension(111, 23));
+        traitsButton.setMinimumSize(new java.awt.Dimension(111, 23));
+        traitsButton.setPreferredSize(new java.awt.Dimension(111, 23));
         traitsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 traitsButtonActionPerformed(evt);
@@ -90,15 +93,23 @@ public class HomeLayout extends javax.swing.JPanel {
         sidePanel.add(traitsButton);
 
         logoutButton.setText("Log Out");
-        logoutButton.setMaximumSize(new java.awt.Dimension(100, 23));
-        logoutButton.setMinimumSize(new java.awt.Dimension(100, 23));
-        logoutButton.setPreferredSize(new java.awt.Dimension(100, 23));
+        logoutButton.setMaximumSize(new java.awt.Dimension(111, 23));
+        logoutButton.setMinimumSize(new java.awt.Dimension(111, 23));
+        logoutButton.setPreferredSize(new java.awt.Dimension(111, 23));
         logoutButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 logoutButtonActionPerformed(evt);
             }
         });
         sidePanel.add(logoutButton);
+
+        deleteAccountButton.setText("Delete Account");
+        deleteAccountButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteAccountButtonActionPerformed(evt);
+            }
+        });
+        sidePanel.add(deleteAccountButton);
 
         add(sidePanel, java.awt.BorderLayout.WEST);
 
@@ -124,9 +135,36 @@ public class HomeLayout extends javax.swing.JPanel {
         innerCard.show(cardPanel, "traits");
     }//GEN-LAST:event_traitsButtonActionPerformed
 
+    private void deleteAccountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAccountButtonActionPerformed
+        int response = JOptionPane.showConfirmDialog(
+                    this,
+                    "Are you sure you want to delete this account?",
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+        if (response == JOptionPane.YES_OPTION) {
+            UserDAO deleteAccount = new UserDAO();
+            try {
+                if (deleteAccount.deleteUser(UserDAO.currentUser.getID())) {
+                    JOptionPane.showMessageDialog(this, "Successfully deleted account.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to delete account.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            loginPanel.resetFields();
+            CardLayout outerCard = (CardLayout)getParent().getLayout();
+            outerCard.show(getParent(), "login");
+            CardLayout innerCard = (CardLayout) cardPanel.getLayout();
+            innerCard.show(cardPanel, "main");
+        }
+    }//GEN-LAST:event_deleteAccountButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel cardPanel;
+    private javax.swing.JButton deleteAccountButton;
     private javax.swing.JButton logoutButton;
     private javax.swing.JButton mainButton;
     private javax.swing.JPanel sidePanel;

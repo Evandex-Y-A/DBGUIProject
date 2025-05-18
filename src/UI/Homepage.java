@@ -5,12 +5,25 @@
 package UI;
 
 import DAO.StoryDAO;
-import java.awt.*;
+import DAO.CharacterDAO;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
+import java.util.function.Function;
+import java.util.List;
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import models.Story;
+import models.Character;
+
 /**
  *
  * @author evandex
@@ -18,6 +31,23 @@ import models.Story;
 public class Homepage extends javax.swing.JPanel {
     private JPanel storiesPanel;
     private JPanel charactersPanel;
+    private Timer storySearchTimer;
+    private Timer characterSearchTimer;
+    private final Color STORY_COLOR = new Color(180, 200, 220);
+    private final Color CHARACTER_COLOR = new Color(220, 200, 180);
+    
+    private JTextField titleField;
+    private JTextField genreField;
+    private JComboBox<String> statusCombo;
+    private JTextArea synopsisArea;
+    private JScrollPane synopsisScroll;
+    private JLabel createdLabel;
+            
+    private JTextField nameField;
+    private JTextArea descArea;
+    private JScrollPane descScroll;
+    private JTextArea backstoryArea;
+    private JScrollPane backstoryScroll;
     /**
      * Creates new form Homepage
      */
@@ -27,89 +57,125 @@ public class Homepage extends javax.swing.JPanel {
         UIManager.put("Viewport.background", new Color(45, 45, 45));
         UIManager.put("ScrollBar.background", new Color(60, 60, 60));
         UIManager.put("ScrollBar.thumb", new Color(80, 80, 80));
+        storiesScrollPane.setViewportView(storiesPanel);
+        charactersScrollPane.setViewportView(charactersPanel);
+        storiesScrollPane.setPreferredSize(new Dimension(400, 200));
+        storiesScrollPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
+        charactersScrollPane.setPreferredSize(new Dimension(400, 200));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
         setupScrollPanes();
+        storiesPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
+        charactersPanel.setBorder(BorderFactory.createLineBorder(Color.BLUE));
+        setupSearchBars();
+        loadInitialData();
+        loadAllStories();
+        loadAllCharacters();
+        
+    }
+    
+    private void loadAllStories() {
+        try {
+            List<Story> stories = StoryDAO.getAllStories();
+            System.out.println("DEBUG: loadAllStories found " + stories.size() + " items");
+            for (Story s : stories) {
+                insertStoryCard(s.getTitle());
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 
-    private void customizeScrollPane(JScrollPane scrollPane) {
-    // Main scroll pane background (border area)
-    scrollPane.setBackground(new Color(60, 60, 60));
-    scrollPane.setBorder(BorderFactory.createEmptyBorder());
-
-    // Viewport (content area)
-    JViewport viewport = scrollPane.getViewport();
-    viewport.setBackground(new Color(45, 45, 45));
-
-    // Scroll Bars
-    customizeScrollBar(scrollPane.getVerticalScrollBar());
-    customizeScrollBar(scrollPane.getHorizontalScrollBar());
-}
-
-    private void customizeScrollBar(JScrollBar scrollBar) {
-        scrollBar.setBackground(new Color(60, 60, 60));
-        scrollBar.setForeground(new Color(80, 80, 80));
-
-        // Remove default arrow buttons and customize thumb
-        scrollBar.setUI(new BasicScrollBarUI() {
-            @Override
-            protected void configureScrollBarColors() {
-                this.thumbColor = new Color(80, 80, 80);
-                this.trackColor = new Color(60, 60, 60);
-                this.thumbDarkShadowColor = new Color(70, 70, 70);
-                this.thumbHighlightColor = new Color(90, 90, 90);
+    private void loadAllCharacters() {
+        try {
+            List<Character> chars = CharacterDAO.getAllCharacters();
+            for (Character c : chars) {
+                insertCharacterCard(c.getName());
             }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    private void setupSearchBars() {
+        // Initialize timers with 300ms delay
+        storySearchTimer = new Timer(300, e -> searchStories());
+        storySearchTimer.setRepeats(false);
+        
+        characterSearchTimer = new Timer(300, e -> searchCharacters());
+        characterSearchTimer.setRepeats(false);
 
+        // Add document listeners
+        setupSearchBar(storySearchBar, storySearchTimer);
+        setupSearchBar(characterSearchBar, characterSearchTimer);
+    }
+    
+    private void setupSearchBar(JTextField searchBar, Timer timer) {
+        searchBar.getDocument().addDocumentListener(new DocumentListener() {
             @Override
-            protected JButton createDecreaseButton(int orientation) {
-                return createInvisibleButton();
-            }
-
+            public void insertUpdate(DocumentEvent e) { restartTimer(timer); }
             @Override
-            protected JButton createIncreaseButton(int orientation) {
-                return createInvisibleButton();
-            }
-
-            private JButton createInvisibleButton() {
-                JButton button = new JButton();
-                button.setPreferredSize(new Dimension(0, 0));
-                button.setBorder(BorderFactory.createEmptyBorder());
-                return button;
-            }
-
+            public void removeUpdate(DocumentEvent e) { restartTimer(timer); }
             @Override
-            protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
-                g.setColor(trackColor);
-                g.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
-            }
-
-            @Override
-            protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            public void changedUpdate(DocumentEvent e) { restartTimer(timer); }
             
-                g2.setColor(thumbColor);
-                g2.fillRoundRect(
-                    thumbBounds.x + 2, 
-                    thumbBounds.y + 2,
-                    thumbBounds.width - 4,
-                    thumbBounds.height - 4,
-                    8, 8
-                );
-            
-                g2.dispose();
+            private void restartTimer(Timer t) {
+                t.stop();
+                t.start();
             }
         });
     }
+    
+    private void searchStories() {
+        String searchText = storySearchBar.getText().toLowerCase();
+        Component[] components = storiesPanel.getComponents();
+        
+        for (int i = 1; i < components.length; i++) { // Skip Add button
+            Component comp = components[i];
+            if (comp instanceof JPanel) {
+                JPanel card = (JPanel) comp;
+                JLabel label = (JLabel) card.getComponent(0);
+                String cardText = getCleanText(label);
+                card.setVisible(cardText.contains(searchText));
+            }
+        }
+        storiesPanel.revalidate();
+        storiesPanel.repaint();
+    }
+    
+    private void searchCharacters() {
+        String searchText = characterSearchBar.getText().toLowerCase();
+        Component[] components = charactersPanel.getComponents();
+        
+        for (int i = 1; i < components.length; i++) { // Skip Add button
+            Component comp = components[i];
+            if (comp instanceof JPanel) {
+                JPanel card = (JPanel) comp;
+                JLabel label = (JLabel) card.getComponent(0);
+                String cardText = getCleanText(label);
+                card.setVisible(cardText.contains(searchText));
+            }
+        }
+        charactersPanel.revalidate();
+        charactersPanel.repaint();
+    }
+    
+    private String getCleanText(JLabel label) {
+        return label.getText()
+                    .replaceAll("<[^>]*>", "") // Remove HTML tags
+                    .toLowerCase();
+    }
+    
     private void setupScrollPanes() {
         // Stories Section
         storiesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         storiesPanel.setBackground(new Color(45, 45, 45));
-        jScrollPane1.setViewportView(storiesPanel);
+        storiesScrollPane.setViewportView(storiesPanel);
         addStoryAddButton();  // Add button first
 
         // Characters Section
         charactersPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         charactersPanel.setBackground(new Color(45, 45, 45));
-        jScrollPane2.setViewportView(charactersPanel);
+        charactersScrollPane.setViewportView(charactersPanel);
         addCharacterAddButton();  // Add button first
     }
 
@@ -134,7 +200,20 @@ public class Homepage extends javax.swing.JPanel {
     }
 
     private void insertStoryCard(String name) {
-        JPanel card = createCard(name, new Color(180, 200, 220));
+        Story newStory = new Story();
+        newStory.setTitle(name);
+        newStory.setStatus("Draft");
+        Story createdStory = new Story();
+        try {
+            createdStory = StoryDAO.createStory(newStory);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "An error occurred.");
+        }
+
+        JPanel card = createCard(createdStory.getTitle(), 
+                               new Color(180, 200, 220),
+                               createdStory.getId(),
+                               true);
         // Add new card immediately after Add button (position 1)
         storiesPanel.add(card, 1);
         storiesPanel.revalidate();
@@ -142,22 +221,21 @@ public class Homepage extends javax.swing.JPanel {
     }
 
     private void insertCharacterCard(String name) {
-        JPanel card = createCard(name, new Color(220, 200, 180));
+        Character character = new Character();
+        character.setName(name);
+        Character createdCharacter = new Character();
+        try {
+            Character tempCharacter = CharacterDAO.createCharacter(character);
+            createdCharacter = tempCharacter;
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "An error occurred.");
+        }
+        
+        JPanel card = createCard(createdCharacter.getName(), new Color(220, 200, 180), createdCharacter.getCharacterId(), false);
         // Add new card immediately after Add button (position 1)
         charactersPanel.add(card, 1);
         charactersPanel.revalidate();
         charactersPanel.repaint();
-    }
-
-
-    private void addStoryCard(String name) {
-        JPanel card = createCard(name, new Color(180, 200, 220));
-        storiesPanel.add(card);  // Add after existing components
-    }
-
-    private void addCharacterCard(String name) {
-        JPanel card = createCard(name, new Color(220, 200, 180));
-        charactersPanel.add(card);  // Add after existing components
     }
 
     private JButton createAddButton(String text, Runnable action) {
@@ -193,60 +271,101 @@ public class Homepage extends javax.swing.JPanel {
         }
     });
     
+    if (isStory) {
+            String searchText = storySearchBar.getText().toLowerCase();
+            card.setVisible(getCleanText(label).contains(searchText));
+        } else {
+            String searchText = characterSearchBar.getText().toLowerCase();
+            card.setVisible(getCleanText(label).contains(searchText));
+        }
+    
     return card;
 }
     private void showCardDialog(Component parent, boolean isStory, int entityId) {
-        JDialog dialog = new JDialog();
-        dialog.setTitle(isStory ? "Edit Story" : "Edit Character");
-        dialog.setLayout(new BorderLayout());
-        dialog.setSize(400, 300);
-        dialog.setLocationRelativeTo(parent);
-
-        JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
-        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        if (isStory) {
-            // Fetch story details from database
-            Story story = StoryDAO.getStoryById(entityId);
+        try {
+            JDialog dialog = new JDialog();
+            dialog.setTitle(isStory ? "Edit Story" : "Edit Character");
+            dialog.setLayout(new BorderLayout());
+            dialog.setSize(400, 300);
+            dialog.setLocationRelativeTo(parent);
+            
+            JButton deleteButton = new JButton("Delete");
+            deleteButton.setBackground(new Color(255, 100, 100));
+            deleteButton.setForeground(Color.WHITE);
+            deleteButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(dialog,
+                    "Are you sure you want to delete this " + (isStory ? "story" : "character") + "?",
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION);
+            
+                if (confirm == JOptionPane.YES_OPTION) {
+                    try {
+                        if (isStory) {
+                            StoryDAO.deleteStory(entityId);
+                        } else {
+                            CharacterDAO.deleteCharacter(entityId);
+                        }
+                        dialog.dispose();
+                        refreshCardDisplay(entityId, isStory);
+                    } catch (SQLException ex) {
+                        JOptionPane.showMessageDialog(dialog, "Delete failed: " + ex.getMessage(),
+                                "Database Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
         
-            JTextField titleField = new JTextField(story.getTitle());
-            JTextField genreField = new JTextField(story.getGenre());
-            JComboBox<String> statusCombo = new JComboBox<>(new String[]{"Draft", "In Progress", "Completed"});
-            statusCombo.setSelectedItem(story.getStatus());
-            JTextArea synopsisArea = new JTextArea(story.getSynopsis());
-            JScrollPane synopsisScroll = new JScrollPane(synopsisArea);
-            JLabel createdLabel = new JLabel(story.getDate().toString());
-
-            formPanel.add(new JLabel("Title:"));
-            formPanel.add(titleField);
-            formPanel.add(new JLabel("Genre:"));
-            formPanel.add(genreField);
-            formPanel.add(new JLabel("Status:"));
-            formPanel.add(statusCombo);
-            formPanel.add(new JLabel("Synopsis:"));
-            formPanel.add(synopsisScroll);
-            formPanel.add(new JLabel("Created:"));
-            formPanel.add(createdLabel);
-        } else {
-            // Fetch character details from database
-            Character character = CharacterDAO.getCharacterById(entityId);
+            JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+            formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            
+            
+            if (isStory) {
+                // Fetch story details from database
+                Story story = StoryDAO.getStoryById(entityId);
         
-            JTextField nameField = new JTextField(character.getName());
-            JTextArea descArea = new JTextArea(character.getDescription());
-            JScrollPane descScroll = new JScrollPane(descArea);
-            JTextArea backstoryArea = new JTextArea(character.getBackstory());
-            JScrollPane backstoryScroll = new JScrollPane(backstoryArea);
+                titleField = new JTextField(story.getTitle());
+                genreField = new JTextField(story.getGenre());
+                statusCombo = new JComboBox<>(new String[]{"Draft", "In Progress", "Completed"});
+                statusCombo.setSelectedItem(story.getStatus());
+                synopsisArea = new JTextArea(story.getSynopsis());
+                synopsisScroll = new JScrollPane(synopsisArea);
+                createdLabel = new JLabel(story.getDate().toString());
 
-            formPanel.add(new JLabel("Name:"));
-            formPanel.add(nameField);
-            formPanel.add(new JLabel("Description:"));
-            formPanel.add(descScroll);
-            formPanel.add(new JLabel("Backstory:"));
-            formPanel.add(backstoryScroll);
-        }
+                formPanel.add(new JLabel("Title:"));
+                formPanel.add(titleField);
+                formPanel.add(new JLabel("Genre:"));
+                formPanel.add(genreField);
+                formPanel.add(new JLabel("Status:"));
+                formPanel.add(statusCombo);
+                formPanel.add(new JLabel("Synopsis:"));
+                formPanel.add(synopsisScroll);
+                formPanel.add(new JLabel("Created:"));
+                formPanel.add(createdLabel);
+            } else {
+                // Fetch character details from database
+            
+                Character character = new Character();
+                try {
+                    character = CharacterDAO.getCharacterById(entityId);
+                } catch (SQLException e) {
+                    JOptionPane.showMessageDialog(null, "An error occurred.");
+                }
+            
+                nameField = new JTextField(character.getName());
+                descArea = new JTextArea(character.getDescription());
+                descScroll = new JScrollPane(descArea);
+                backstoryArea = new JTextArea(character.getBackstory());
+                backstoryScroll = new JScrollPane(backstoryArea);
 
-        JButton saveButton = new JButton("Save");
-        saveButton.addActionListener(e -> {
+                formPanel.add(new JLabel("Name:"));
+                formPanel.add(nameField);
+                formPanel.add(new JLabel("Description:"));
+                formPanel.add(descScroll);
+                formPanel.add(new JLabel("Backstory:"));
+                formPanel.add(backstoryScroll);
+            }
+
+            JButton saveButton = new JButton("Save");
+            saveButton.addActionListener(e -> {
             try {
                 if (isStory) {
                     Story updatedStory = new Story();
@@ -256,32 +375,111 @@ public class Homepage extends javax.swing.JPanel {
                     updatedStory.setStatus((String) statusCombo.getSelectedItem());
                     updatedStory.setSynopsis(synopsisArea.getText());
                     StoryDAO.updateStory(updatedStory);
-                    } else {
-                        Character updatedCharacter = new Character();
-                        updatedCharacter.setId(entityId);
-                        updatedCharacter.setName(nameField.getText());
-                        updatedCharacter.setDescription(descArea.getText());
-                        updatedCharacter.setBackstory(backstoryArea.getText());
-                        CharacterDAO.updateCharacter(updatedCharacter);
-                    }
-                    JOptionPane.showMessageDialog(dialog, "Changes saved successfully!");
-                    dialog.dispose();
-                    refreshCardDisplay(entityId, isStory); // Refresh UI
-            } catch (Exception ex) {
+                } else {
+                    Character updatedCharacter = new Character();
+                    updatedCharacter.setCharacterId(entityId);
+                    updatedCharacter.setName(nameField.getText());
+                    updatedCharacter.setDescription(descArea.getText());
+                    updatedCharacter.setBackstory(backstoryArea.getText());
+                    CharacterDAO.updateCharacter(updatedCharacter);
+                }
+                JOptionPane.showMessageDialog(dialog, "Changes saved successfully!");
+                dialog.dispose();
+                refreshCardDisplay(entityId, isStory);
+            } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(dialog, "Error saving changes: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(saveButton);
-        buttonPanel.add(createCancelButton(dialog));
+            JPanel buttonPanel = new JPanel(new BorderLayout());
+            JPanel actionButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            actionButtons.add(saveButton);
+            actionButtons.add(createCancelButton(dialog));
+        
+            buttonPanel.add(deleteButton, BorderLayout.WEST);
+            buttonPanel.add(actionButtons, BorderLayout.EAST);
 
-        dialog.add(formPanel, BorderLayout.CENTER);
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
-        dialog.setVisible(true);
+            dialog.add(formPanel, BorderLayout.CENTER);
+            dialog.add(buttonPanel, BorderLayout.SOUTH);
+            dialog.setVisible(true);
+        } catch (SQLException e) {
+            
+        }
+        
     }
     
+    private void loadInitialData() {
+        try {
+            for (Story story : StoryDAO.getAllStories()) {
+                storiesPanel.add(createCard(story.getTitle(), STORY_COLOR, story.getId(), true), 1);
+            }
+            for (Character character : CharacterDAO.getAllCharacters()) {
+                charactersPanel.add(createCard(character.getName(), CHARACTER_COLOR, character.getCharacterId(), false), 1);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error loading data: " + ex.getMessage(),
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    private void refreshCardDisplay(int entityId, boolean isStory) {
+    try {
+        if (isStory) {
+            // Handle story card refresh
+            Story updatedStory = StoryDAO.getStoryById(entityId);
+            refreshOrRemoveCard(
+                storiesPanel, 
+                updatedStory, 
+                entityId, 
+                s -> createCard(s.getTitle(), new Color(180, 200, 220), s.getId(), true)
+            );
+        } else {
+            // Handle character card refresh
+            Character updatedCharacter = CharacterDAO.getCharacterById(entityId);
+            refreshOrRemoveCard(
+                charactersPanel, 
+                updatedCharacter, 
+                entityId, 
+                c -> createCard(c.getName(), new Color(220, 200, 180), c.getCharacterId(), false)
+            );
+        }
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, "Error refreshing data: " + ex.getMessage(),
+                "Database Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+    private <T> void refreshOrRemoveCard(JPanel container, T entity, int entityId, 
+                                    Function<T, JPanel> cardCreator) {
+    // 1. Try to find existing card
+    for (Component comp : container.getComponents()) {
+        if (comp instanceof JPanel) {
+            JPanel card = (JPanel) comp;
+            Integer storedId = (Integer) card.getClientProperty("entityId");
+            if (storedId != null && storedId == entityId) {
+                if (entity == null) {
+                    // 2a. Entity deleted - remove card
+                    container.remove(card);
+                } else {
+                    // 2b. Entity updated - replace card
+                    int index = container.getComponentZOrder(card);
+                    container.remove(index);
+                    container.add(cardCreator.apply(entity), index);
+                }
+                container.revalidate();
+                container.repaint();
+                return;
+            }
+        }
+    }
+    
+    // 3. If new entity (unlikely but possible)
+    if (entity != null) {
+        container.add(cardCreator.apply(entity), 1); // Add after Add button
+        container.revalidate();
+        container.repaint();
+    }
+}
     private JButton createCancelButton(JDialog dialog) {
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(e -> dialog.dispose());
@@ -298,11 +496,14 @@ public class Homepage extends javax.swing.JPanel {
 
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
-        assignButton = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        storySearchBar = new javax.swing.JTextField();
+        storyDeleteButton = new javax.swing.JButton();
+        storiesScrollPane = new javax.swing.JScrollPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        characterSearchBar = new javax.swing.JTextField();
+        characterDeleteButton = new javax.swing.JButton();
+        charactersScrollPane = new javax.swing.JScrollPane();
 
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS));
 
@@ -310,53 +511,72 @@ public class Homepage extends javax.swing.JPanel {
         jPanel1.setMaximumSize(new java.awt.Dimension(32767, 25));
         jPanel1.setMinimumSize(new java.awt.Dimension(100, 25));
         jPanel1.setPreferredSize(new java.awt.Dimension(400, 25));
-        jPanel1.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+        jPanel1.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 2));
 
         jLabel1.setText("Stories");
-        jLabel1.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        jLabel1.setToolTipText("");
         jLabel1.setMaximumSize(new java.awt.Dimension(100, 20));
         jLabel1.setMinimumSize(new java.awt.Dimension(100, 20));
-        jLabel1.setPreferredSize(new java.awt.Dimension(50, 20));
+        jLabel1.setPreferredSize(new java.awt.Dimension(65, 20));
         jPanel1.add(jLabel1);
 
-        assignButton.setText("Assign Character to Story");
-        jPanel1.add(assignButton);
+        storySearchBar.setText("Search...");
+        storySearchBar.setPreferredSize(new java.awt.Dimension(200, 22));
+        jPanel1.add(storySearchBar);
+
+        storyDeleteButton.setText("Delete");
+        jPanel1.add(storyDeleteButton);
 
         add(jPanel1);
 
-        jScrollPane1.setBackground(new java.awt.Color(51, 51, 51));
-        jScrollPane1.setForeground(new java.awt.Color(51, 51, 51));
-        add(jScrollPane1);
+        storiesScrollPane.setBackground(new java.awt.Color(51, 51, 51));
+        storiesScrollPane.setForeground(new java.awt.Color(51, 51, 51));
+        storiesScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        storiesScrollPane.setMinimumSize(new java.awt.Dimension(400, 200));
+        storiesScrollPane.setPreferredSize(new java.awt.Dimension(400, 200));
+        add(storiesScrollPane);
 
         jPanel2.setBackground(new java.awt.Color(100, 100, 100));
         jPanel2.setMaximumSize(new java.awt.Dimension(32767, 25));
         jPanel2.setMinimumSize(new java.awt.Dimension(100, 25));
         jPanel2.setPreferredSize(new java.awt.Dimension(400, 25));
-        jPanel2.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+        jPanel2.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 2));
 
         jLabel2.setText("Characters");
-        jLabel2.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         jLabel2.setMaximumSize(new java.awt.Dimension(100, 20));
         jLabel2.setMinimumSize(new java.awt.Dimension(100, 20));
         jLabel2.setName(""); // NOI18N
-        jLabel2.setPreferredSize(new java.awt.Dimension(70, 20));
+        jLabel2.setPreferredSize(new java.awt.Dimension(65, 20));
         jPanel2.add(jLabel2);
+
+        characterSearchBar.setText("Search...");
+        characterSearchBar.setPreferredSize(new java.awt.Dimension(200, 22));
+        jPanel2.add(characterSearchBar);
+
+        characterDeleteButton.setText("Delete");
+        jPanel2.add(characterDeleteButton);
 
         add(jPanel2);
 
-        jScrollPane2.setBackground(new java.awt.Color(51, 51, 51));
-        jScrollPane2.setForeground(new java.awt.Color(51, 51, 51));
-        add(jScrollPane2);
+        charactersScrollPane.setBackground(new java.awt.Color(51, 51, 51));
+        charactersScrollPane.setForeground(new java.awt.Color(51, 51, 51));
+        charactersScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        charactersScrollPane.setMinimumSize(new java.awt.Dimension(400, 200));
+        charactersScrollPane.setPreferredSize(new java.awt.Dimension(400, 200));
+        add(charactersScrollPane);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton assignButton;
+    private javax.swing.JButton characterDeleteButton;
+    private javax.swing.JTextField characterSearchBar;
+    private javax.swing.JScrollPane charactersScrollPane;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane storiesScrollPane;
+    private javax.swing.JButton storyDeleteButton;
+    private javax.swing.JTextField storySearchBar;
     // End of variables declaration//GEN-END:variables
 }
