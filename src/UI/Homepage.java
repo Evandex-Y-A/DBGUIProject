@@ -25,7 +25,19 @@ import models.Story;
 import models.Character;
 
 /**
- *
+ * The Homepage class represents the main GUI panel for managing stories and characters.
+ * It provides functionality to:
+ * <ul>
+ * <li>Display scrollable cards for stories and characters</li>
+ * <li>Add new stories/characters with input dialogs</li>
+ * <li>Search/filter existing entries with type-ahead search</li>
+ * <li>Edit existing entries through detail dialogs</li>
+ * <li>Delete entries with confirmation</li>
+ * <li>Persist changes to a database via DAO classes</li>
+ * </ul>
+ * 
+ * The UI features a dark theme with color-coded cards and maintains responsive layouts.
+ * 
  * @author evandex
  */
 public class Homepage extends javax.swing.JPanel {
@@ -33,7 +45,13 @@ public class Homepage extends javax.swing.JPanel {
     private JPanel charactersPanel;
     private Timer storySearchTimer;
     private Timer characterSearchTimer;
+    /**
+     * Background color used for story cards
+     */
     private final Color STORY_COLOR = new Color(180, 200, 220);
+    /**
+     * Background color used for character cards
+     */
     private final Color CHARACTER_COLOR = new Color(220, 200, 180);
     
     private JTextField titleField;
@@ -48,8 +66,14 @@ public class Homepage extends javax.swing.JPanel {
     private JScrollPane descScroll;
     private JTextArea backstoryArea;
     private JScrollPane backstoryScroll;
+    
     /**
-     * Creates new form Homepage
+     * Constructs a new Homepage panel with initialized components.
+     * Sets up:
+     * - Scrollable card panels for stories and characters
+     * - Search functionality with 300ms delay
+     * - Initial data loading from database
+     * - Custom UI styling for dark theme
      */
     public Homepage() {
         initComponents();
@@ -64,38 +88,14 @@ public class Homepage extends javax.swing.JPanel {
         charactersScrollPane.setPreferredSize(new Dimension(400, 200));
         setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
         setupScrollPanes();
-        storiesPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
-        charactersPanel.setBorder(BorderFactory.createLineBorder(Color.BLUE));
         setupSearchBars();
         loadInitialData();
-        loadAllStories();
-        loadAllCharacters();
-        
     }
     
-    private void loadAllStories() {
-        try {
-            List<Story> stories = StoryDAO.getAllStories();
-            System.out.println("DEBUG: loadAllStories found " + stories.size() + " items");
-            for (Story s : stories) {
-                insertStoryCard(s.getTitle());
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    private void loadAllCharacters() {
-        try {
-            List<Character> chars = CharacterDAO.getAllCharacters();
-            for (Character c : chars) {
-                insertCharacterCard(c.getName());
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-    
+    /**
+     * Configures the search functionality for both story and character panels.
+     * Uses a 300ms delay timer to prevent excessive database queries during typing.
+     */
     private void setupSearchBars() {
         // Initialize timers with 300ms delay
         storySearchTimer = new Timer(300, e -> searchStories());
@@ -125,6 +125,10 @@ public class Homepage extends javax.swing.JPanel {
         });
     }
     
+    /**
+     * Filters visible story cards based on search text.
+     * Matching is case-insensitive and ignores HTML formatting in card labels.
+     */
     private void searchStories() {
         String searchText = storySearchBar.getText().toLowerCase();
         Component[] components = storiesPanel.getComponents();
@@ -142,6 +146,10 @@ public class Homepage extends javax.swing.JPanel {
         storiesPanel.repaint();
     }
     
+    /**
+     * Filters visible character cards based on search text.
+     * Matching is case-insensitive and ignores HTML formatting in card labels.
+     */
     private void searchCharacters() {
         String searchText = characterSearchBar.getText().toLowerCase();
         Component[] components = charactersPanel.getComponents();
@@ -199,27 +207,37 @@ public class Homepage extends javax.swing.JPanel {
         charactersPanel.add(addBtn);  // Add button at position 0
     }
 
+    /**
+     * Creates a new story card and adds it to the UI.
+     * 
+     * @param name The title of the story to create
+     * @throws SQLException if there's an error persisting to the database
+     */
     private void insertStoryCard(String name) {
-        Story newStory = new Story();
-        newStory.setTitle(name);
-        newStory.setStatus("Draft");
-        Story createdStory = new Story();
         try {
-            createdStory = StoryDAO.createStory(newStory);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "An error occurred.");
-        }
-
-        JPanel card = createCard(createdStory.getTitle(), 
+            Story newStory = new Story();
+            newStory.setTitle(name);
+            newStory.setStatus("Draft");
+            Story createdStory = StoryDAO.createStory(newStory);
+        
+            JPanel card = createCard(createdStory.getTitle(), 
                                new Color(180, 200, 220),
                                createdStory.getId(),
                                true);
-        // Add new card immediately after Add button (position 1)
-        storiesPanel.add(card, 1);
-        storiesPanel.revalidate();
-        storiesPanel.repaint();
+            storiesPanel.add(card, 1);
+            storiesPanel.revalidate();
+            storiesPanel.repaint();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error creating story: " + e.getMessage());
+        }
     }
 
+    /**
+     * Creates a new character card and adds it to the UI.
+     * 
+     * @param name The name of the character to create
+     * @throws SQLException if there's an error persisting to the database
+     */
     private void insertCharacterCard(String name) {
         Character character = new Character();
         character.setName(name);
@@ -248,6 +266,15 @@ public class Homepage extends javax.swing.JPanel {
         return btn;
     }
 
+    /**
+     * Creates a reusable card component for display in the scroll panels.
+     * 
+     * @param text      The text to display in the card (HTML supported)
+     * @param color     The background color for the card
+     * @param entityId  The database ID associated with this card
+     * @param isStory   True if this is a story card, false for character
+     * @return JPanel containing the formatted card component
+     */
     private JPanel createCard(String text, Color color, int entityId, boolean isStory) {
     JPanel card = new JPanel(new BorderLayout());
     card.setPreferredSize(new Dimension(120, 160));
@@ -278,9 +305,18 @@ public class Homepage extends javax.swing.JPanel {
             String searchText = characterSearchBar.getText().toLowerCase();
             card.setVisible(getCleanText(label).contains(searchText));
         }
-    
+    card.setVisible(true);
+    card.putClientProperty("entityId", entityId);
     return card;
 }
+    /**
+     * Shows the edit dialog for a specific story or character.
+     * 
+     * @param parent    The parent component for dialog positioning
+     * @param isStory   True if editing a story, false for character
+     * @param entityId  The database ID of the entity being edited
+     * @throws SQLException if there's an error loading entity data
+     */
     private void showCardDialog(Component parent, boolean isStory, int entityId) {
         try {
             JDialog dialog = new JDialog();
@@ -411,80 +447,101 @@ public class Homepage extends javax.swing.JPanel {
     
     private void loadInitialData() {
         try {
+            // Load stories without creating new database entries
             for (Story story : StoryDAO.getAllStories()) {
-                storiesPanel.add(createCard(story.getTitle(), STORY_COLOR, story.getId(), true), 1);
+                JPanel card = createCard(story.getTitle(), STORY_COLOR, story.getId(), true);
+                storiesPanel.add(card, 1);
             }
+        
+            // Load characters without creating new database entries
             for (Character character : CharacterDAO.getAllCharacters()) {
-                charactersPanel.add(createCard(character.getName(), CHARACTER_COLOR, character.getCharacterId(), false), 1);
+                JPanel card = createCard(character.getName(), CHARACTER_COLOR, character.getCharacterId(), false);
+                charactersPanel.add(card, 1);
             }
+        
+            storiesPanel.revalidate();
+            storiesPanel.repaint();
+            charactersPanel.revalidate();
+            charactersPanel.repaint();
+        
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error loading data: " + ex.getMessage(),
-                    "Database Error", JOptionPane.ERROR_MESSAGE);
+                "Database Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
+    /**
+     * Refreshes the UI display after entity modifications.
+     * Handles both updates and deletions of existing cards.
+     * 
+     * @param entityId  The database ID of the modified entity
+     * @param isStory   True if handling a story, false for character
+     * @throws SQLException if there's an error accessing the database
+     */
     private void refreshCardDisplay(int entityId, boolean isStory) {
-    try {
-        if (isStory) {
-            // Handle story card refresh
-            Story updatedStory = StoryDAO.getStoryById(entityId);
-            refreshOrRemoveCard(
-                storiesPanel, 
-                updatedStory, 
-                entityId, 
-                s -> createCard(s.getTitle(), new Color(180, 200, 220), s.getId(), true)
-            );
-        } else {
-            // Handle character card refresh
-            Character updatedCharacter = CharacterDAO.getCharacterById(entityId);
-            refreshOrRemoveCard(
-                charactersPanel, 
-                updatedCharacter, 
-                entityId, 
-                c -> createCard(c.getName(), new Color(220, 200, 180), c.getCharacterId(), false)
-            );
-        }
-    } catch (SQLException ex) {
-        JOptionPane.showMessageDialog(this, "Error refreshing data: " + ex.getMessage(),
+        try {
+            if (isStory) {
+                // Handle story card refresh
+                Story updatedStory = StoryDAO.getStoryById(entityId);
+                refreshOrRemoveCard(
+                    storiesPanel, 
+                    updatedStory, 
+                    entityId, 
+                    s -> createCard(s.getTitle(), new Color(180, 200, 220), s.getId(), true)
+                );
+            } else {
+                // Handle character card refresh
+                Character updatedCharacter = CharacterDAO.getCharacterById(entityId);
+                refreshOrRemoveCard(
+                    charactersPanel, 
+                    updatedCharacter, 
+                    entityId, 
+                    c -> createCard(c.getName(), new Color(220, 200, 180), c.getCharacterId(), false)
+                );
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error refreshing data: " + ex.getMessage(),
                 "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
-}
-    private <T> void refreshOrRemoveCard(JPanel container, T entity, int entityId, 
+        private <T> void refreshOrRemoveCard(JPanel container, T entity, int entityId, 
                                     Function<T, JPanel> cardCreator) {
-    // 1. Try to find existing card
-    for (Component comp : container.getComponents()) {
-        if (comp instanceof JPanel) {
-            JPanel card = (JPanel) comp;
-            Integer storedId = (Integer) card.getClientProperty("entityId");
-            if (storedId != null && storedId == entityId) {
-                if (entity == null) {
-                    // 2a. Entity deleted - remove card
-                    container.remove(card);
-                } else {
-                    // 2b. Entity updated - replace card
-                    int index = container.getComponentZOrder(card);
-                    container.remove(index);
-                    container.add(cardCreator.apply(entity), index);
+        // 1. Try to find existing card
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JPanel) {
+                JPanel card = (JPanel) comp;
+                Integer storedId = (Integer) card.getClientProperty("entityId");
+                if (storedId != null && storedId == entityId) {
+                    if (entity == null) {
+                        // 2a. Entity deleted - remove card
+                        container.remove(card);
+                    } else {
+                        // 2b. Entity updated - replace card
+                        int index = container.getComponentZOrder(card);
+                        container.remove(index);
+                        container.add(cardCreator.apply(entity), index);
+                    }
+                    container.revalidate();
+                    container.repaint();
+                    return;
                 }
-                container.revalidate();
-                container.repaint();
-                return;
             }
         }
-    }
     
-    // 3. If new entity (unlikely but possible)
-    if (entity != null) {
-        container.add(cardCreator.apply(entity), 1); // Add after Add button
-        container.revalidate();
-        container.repaint();
+        // 3. If new entity (unlikely but possible)
+        if (entity != null) {
+            container.add(cardCreator.apply(entity), 1); // Add after Add button
+            container.revalidate();
+            container.repaint();
+        }
     }
-}
     private JButton createCancelButton(JDialog dialog) {
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(e -> dialog.dispose());
         return cancelButton;
     }
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

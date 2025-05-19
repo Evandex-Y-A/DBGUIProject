@@ -7,6 +7,8 @@ package models;
 /**
  * Represents a character entity within the system, associated with a specific user.
  * This class encapsulates details such as the character's name, description, and backstory.
+ * 
+ * @author evandex
  */
 public class Character {
     private int character_id;

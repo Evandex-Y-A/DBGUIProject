@@ -11,13 +11,35 @@ import java.util.List;
 import models.Story;
 import Utils.DatabaseUtils;
 import javax.swing.JOptionPane;
+
 /**
- *
+ * Data Access Object (DAO) for performing CRUD operations on Story records.
+ * <p>
+ * All methods use {@link DatabaseUtils#ConnecttoDB()} to obtain a JDBC
+ * connection and operate on the `story` table for the currently
+ * authenticated user {@link UserDAO#currentUser}.
+ * </p>
+ * 
+ * @see DatabaseUtils
+ * @see UserDAO#currentUser
+ * @see Story
+ * 
  * @author evandex
  */
 public class StoryDAO {
     private static Connection connection;
 
+    /**
+     * Inserts a new story record into the database and sets its generated ID.
+     * 
+     * @param story the {@link Story} instance containing title, genre,
+     *              status, and synopsis (user_id and creation_date are set
+     *              by the database)
+     * @return the same {@code story} instance, with its {@code id} field
+     *         populated from the database-generated key
+     * @throws SQLException if a database access error occurs or no rows
+     *                      were affected
+     */
     public static Story createStory(Story story) throws SQLException {
         String sql = "INSERT INTO story (user_id, title, genre, status, synopsis) VALUES (?,?,?,?,?)";
         
@@ -45,6 +67,14 @@ public class StoryDAO {
         }
     }
     
+    /**
+     * Retrieves a story by its unique identifier.
+     * 
+     * @param id the {@code story_id} of the story to fetch
+     * @return a {@link Story} object populated from the database, or
+     *         {@code null} if no matching record is found or on error
+     * @throws SQLException if a database access error occurs
+     */
     public static Story getStoryById(int id) throws SQLException {
         connection = DatabaseUtils.ConnecttoDB();
         try {
@@ -71,6 +101,13 @@ public class StoryDAO {
         }
     }
     
+    /**
+     * Updates the database record for the given story.
+     * 
+     * @param story the {@link Story} instance containing updated title,
+     *              genre, status, synopsis, and its valid {@code id}
+     * @throws SQLException if a database access error occurs
+     */
     public static void updateStory(Story story) throws SQLException {
         String sql = "UPDATE story SET title = ?, genre = ?, status = ?, synopsis = ? WHERE story_id = ?";
         
@@ -87,6 +124,13 @@ public class StoryDAO {
         }
     }
     
+    /**
+     * Retrieves all stories for the currently authenticated user.
+     * 
+     * @return a {@link List} of {@link Story} objects for the current user,
+     *         or {@code null} on database error
+     * @throws SQLException if a database access error occurs
+     */
     public static List<Story> getAllStories() throws SQLException {
         List<Story> stories = new ArrayList<>();
         String sql = "SELECT * FROM story where user_id = ?";
@@ -114,6 +158,12 @@ public class StoryDAO {
 
     }
     
+    /**
+     * Deletes a story record by its unique identifier.
+     * 
+     * @param id the {@code story_id} of the story to delete
+     * @throws SQLException if a database access error occurs
+     */
     public static void deleteStory(int id) throws SQLException {
         String sql = "DELETE FROM story WHERE story_id = ?";
         try (Connection conn = DatabaseUtils.ConnecttoDB();

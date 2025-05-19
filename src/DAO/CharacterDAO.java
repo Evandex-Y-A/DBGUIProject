@@ -11,11 +11,31 @@ import models.Character;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
+
 /**
+ * Data Access Object (DAO) for performing CRUD operations on Character records.
+ * <p>
+ * All methods use {@link DatabaseUtils#ConnecttoDB()} to obtain a JDBC
+ * connection and operate on the `characters` table for the currently
+ * authenticated user {@link UserDAO#currentUser}.
+ * </p>
  *
- * @author evandex
+ * @see DatabaseUtils
+ * @see UserDAO#currentUser
+ * @see Character
  */
 public class CharacterDAO {
+    
+    /**
+     * Inserts a new character record into the database and sets its generated ID.
+     *
+     * @param character the {@link Character} instance containing name,
+     *                  description, and backstory (user_id is set automatically)
+     * @return the same {@code character} instance, with its {@code characterId}
+     *         field populated from the database-generated key
+     * @throws SQLException if a database access error occurs or no rows
+     *                      were affected
+     */
     public static Character createCharacter(Character character) throws SQLException {
         String sql = "INSERT INTO characters (user_id, name, description, backstory) VALUES(?,?,?,?)";
         
@@ -43,6 +63,14 @@ public class CharacterDAO {
         }
     }
     
+    /**
+     * Retrieves a character by its unique identifier.
+     *
+     * @param id the {@code character_id} of the character to fetch
+     * @return a {@link Character} object populated from the database,
+     *         or {@code null} if no matching record is found
+     * @throws SQLException if a database access error occurs
+     */
     public static Character getCharacterById(int id) throws SQLException {
         String sql = "SELECT * FROM characters WHERE character_id = ?";
         
@@ -65,6 +93,13 @@ public class CharacterDAO {
         }
     }
     
+    /**
+     * Updates the database record for the given character.
+     *
+     * @param character the {@link Character} instance containing updated name,
+     *                  description, backstory, and its valid {@code characterId}
+     * @throws SQLException if a database access error occurs
+     */
     public static void updateCharacter(Character character) throws SQLException {
         String sql = "UPDATE characters SET name = ?, description = ?, backstory = ? WHERE character_id = ?";
         
@@ -80,6 +115,13 @@ public class CharacterDAO {
         }
     }
 
+    /**
+     * Retrieves all characters for the currently authenticated user.
+     *
+     * @return a {@link List} of {@link Character} objects for the current user,
+     *         or {@code null} on database error
+     * @throws SQLException if a database access error occurs
+     */
     public static List<Character> getAllCharacters() throws SQLException {
         List<Character> characters = new ArrayList<>();
         String sql = "SELECT * FROM characters where user_id = ?";
@@ -105,6 +147,12 @@ public class CharacterDAO {
         }
     }
     
+    /**
+     * Deletes a character record by its unique identifier.
+     *
+     * @param id the {@code character_id} of the character to delete
+     * @throws SQLException if a database access error occurs
+     */
     public static void deleteCharacter(int id) throws SQLException {
         String sql = "DELETE FROM characters WHERE character_id = ?";
         try (Connection conn = DatabaseUtils.ConnecttoDB();
